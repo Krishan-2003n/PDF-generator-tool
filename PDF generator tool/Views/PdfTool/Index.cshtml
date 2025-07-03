@@ -1,0 +1,2301 @@
+﻿@* @{
+    ViewData["Title"] = "Dynamic PDF & Excel Export Tool";
+}
+
+<h2 class="text-primary mb-4">📋 Dynamic Export Report</h2>
+
+<!-- Connection String Input -->
+<div class="mb-3">
+    <label for="connStr" class="form-label">Connection String</label>
+    <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+</div>
+
+<!-- Load Tables Button -->
+<div class="mb-3">
+    <button class="btn btn-outline-primary" onclick="loadTables()">🔄 Load Tables</button>
+</div>
+
+<!-- Table Dropdown -->
+<div class="mb-3">
+    <label for="tableDropdown" class="form-label">Select Table</label>
+    <select id="tableDropdown" class="form-select" onchange="loadColumns()">
+        <option value="">-- Select Table --</option>
+    </select>
+</div>
+
+<!-- Column Checkboxes -->
+<div class="mb-3" id="columnsDiv" style="display:none;">
+    <label class="form-label">Select Columns</label>
+    <div id="columnCheckboxes" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
+</div>
+
+<!-- Generate Buttons -->
+<div class="mb-3">
+    <button class="btn btn-success me-2" onclick="generatePdf()">📄 Generate PDF</button>
+    <button class="btn btn-warning" onclick="generateExcel()">📊 Download Excel</button>
+</div>
+
+<!-- JavaScript -->
+<script>
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => {
+                dropdown.innerHTML += `<option value="${table}">${table}</option>`;
+            });
+        })
+        .catch(err => alert("Error loading tables: " + err));
+    }
+
+    function loadColumns() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+
+        if (!tableName) return;
+
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName: tableName })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById("columnCheckboxes");
+            container.innerHTML = "";
+            data.forEach(col => {
+                container.innerHTML += `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="${col}" id="${col}" />
+                        <label class="form-check-label" for="${col}">${col}</label>
+                    </div>`;
+            });
+            document.getElementById("columnsDiv").style.display = "block";
+        })
+        .catch(err => alert("Error loading columns: " + err));
+    }
+
+    function generatePdf() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+        const checkboxes = document.querySelectorAll("#columnCheckboxes input:checked");
+        const selectedFields = Array.from(checkboxes).map(cb => cb.value);
+
+        if (!connStr || !tableName || selectedFields.length === 0) {
+            alert("Please fill all details.");
+            return;
+        }
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                connectionString: connStr,
+                tableName: tableName,
+                selectedFields: selectedFields
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `${tableName}.pdf`;
+            link.click();
+        })
+        .catch(err => alert("Error generating PDF: " + err));
+    }
+
+    function generateExcel() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+        const checkboxes = document.querySelectorAll("#columnCheckboxes input:checked");
+        const selectedFields = Array.from(checkboxes).map(cb => cb.value);
+
+        if (!connStr || !tableName || selectedFields.length === 0) {
+            alert("Please fill all details.");
+            return;
+        }
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                connectionString: connStr,
+                tableName: tableName,
+                selectedFields: selectedFields
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `${tableName}.xlsx`;
+            link.click();
+        })
+        .catch(err => alert("Error generating Excel: " + err));
+    }
+</script> *@
+
+
+<!-- Scripts -->
+@* <script>
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => {
+                dropdown.innerHTML += `<option value="${table}">${table}</option>`;
+            });
+        })
+        .catch(err => alert("Error loading tables: " + err));
+    }
+
+    function loadColumns() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+
+        if (!tableName) return;
+
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName: tableName })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById("columnCheckboxes");
+            container.innerHTML = "";
+            data.forEach(col => {
+                const safeId = col.replace(/[^a-zA-Z0-9]/g, '_');
+                    container.innerHTML += `
+        <div class="form-check d-flex align-items-center gap-2">
+            <input class="form-check-input mt-0" type="checkbox" value="${col}" id="${safeId}" />
+            <label class="form-check-label mb-0 text-truncate w-100" for="${safeId}" title="${col}">${col}</label>
+        </div>`;
+
+            });
+            document.getElementById("columnsDiv").style.display = "block";
+        })
+        .catch(err => alert("Error loading columns: " + err));
+    }
+
+    function generatePdf() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+        const selectedFields = getSelectedFields();
+        if (!connStr || !tableName || selectedFields.length === 0) {
+            alert("Please fill all details.");
+            return;
+        }
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+        })
+        .then(response => response.blob())
+        .then(blob => downloadBlob(blob, `${tableName}.pdf`))
+        .catch(err => alert("Error generating PDF: " + err));
+    }
+
+    function generateExcel() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+        const selectedFields = getSelectedFields();
+        if (!connStr || !tableName || selectedFields.length === 0) {
+            alert("Please fill all details.");
+            return;
+        }
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+        })
+        .then(response => response.blob())
+        .then(blob => downloadBlob(blob, `${tableName}.xlsx`))
+        .catch(err => alert("Error generating Excel: " + err));
+    }
+
+    function generateWord() {
+        const connStr = document.getElementById("connStr").value;
+        const tableName = document.getElementById("tableDropdown").value;
+        const selectedFields = getSelectedFields();
+        if (!connStr || !tableName || selectedFields.length === 0) {
+            alert("Please fill all details.");
+            return;
+        }
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+        })
+        .then(response => response.blob())
+        .then(blob => downloadBlob(blob, `${tableName}.docx`))
+        .catch(err => alert("Error generating Word document: " + err));
+    }
+
+    function getSelectedFields() {
+        const checkboxes = document.querySelectorAll("#columnCheckboxes input:checked");
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+</script> *@
+
+
+
+
+
+
+
+
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">
+                🔄 Load Tables
+            </button>
+        </div>
+
+        <!-- Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Table</label>
+            <select id="tableDropdown" class="form-select" onchange="loadColumns()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Column Checkboxes -->
+        <div class="col-12" id="columnsDiv" style="display:none;">
+            <label class="form-label fw-semibold">📌 Select Columns</label>
+            <div id="columnCheckboxes" class="border rounded bg-white px-3 py-2"
+                 style="max-height: 220px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;">
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="col-12 text-center mt-3">
+                <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+                <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+                <button class="btn btn-info" onclick="generateWord()">📝 Word</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <style>
+
+        #columnCheckboxes .form-check {
+            padding: 4px 0;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        #columnCheckboxes .select-all-box {
+            background-color: #f7f7f7;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            grid-column: span 2; /* makes it span full width if grid has 2+ columns */
+        }
+
+            #columnCheckboxes .select-all-box input.form-check-input {
+                margin-right: 8px;
+                margin-top: 0;
+            }
+
+        #columnCheckboxes .form-check {
+            padding: 4px 0;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+
+        #columnCheckboxes .form-check-input {
+            margin-top: 0.3rem;
+        }
+
+        #columnCheckboxes .form-check-label {
+            display: inline-block;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .dark-mode {
+            background-color: #1e1e1e;
+            color: #f1f1f1;
+        }
+
+            .dark-mode .card {
+                background-color: #2b2b2b;
+                border-color: #444;
+            }
+
+            .dark-mode .form-control,
+            .dark-mode .form-select {
+                background-color: #333;
+                color: #fff;
+                border-color: #555;
+            }
+
+            .dark-mode .btn {
+                border-color: #666;
+            }
+
+            .dark-mode label,
+            .dark-mode .form-check-label {
+                color: #ddd;
+            }
+
+            .dark-mode #columnCheckboxes {
+                background-color: #383838;
+            }
+    </style>
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        function loadTables() {
+            const connStr = document.getElementById("connStr").value;
+            fetch('/PdfTool/GetTables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const dropdown = document.getElementById("tableDropdown");
+                dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+                data.forEach(table => {
+                    dropdown.innerHTML += `<option value="${table}">${table}</option>`;
+                });
+            })
+            .catch(err => alert("Error loading tables: " + err));
+        }
+
+        function loadColumns() {
+            const connStr = document.getElementById("connStr").value;
+            const tableName = document.getElementById("tableDropdown").value;
+
+            if (!tableName) return;
+
+            fetch('/PdfTool/GetColumns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName: tableName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById("columnCheckboxes");
+                container.innerHTML = "";
+
+                // ✅ Add Select All checkbox
+                          container.innerHTML += `
+        <div class="form-check d-flex align-items-center gap-2 border-bottom pb-2 mb-2">
+            <input class="form-check-input mt-0" type="checkbox" id="selectAllFields" onchange="toggleSelectAll(this)">
+            <label class="form-check-label mb-0 fw-semibold" for="selectAllFields">Select All Fields</label>
+        </div>`;
+
+
+
+
+                data.forEach(col => {
+                    const safeId = col.replace(/[^a-zA-Z0-9]/g, '_');
+                    container.innerHTML += `
+                        <div class="form-check d-flex align-items-center gap-2">
+                            <input class="form-check-input mt-0 column-checkbox" type="checkbox" value="${col}" id="${safeId}" onchange="updateSelectAllStatus()">
+                            <label class="form-check-label mb-0 text-truncate w-100" for="${safeId}" title="${col}">${col}</label>
+                        </div>`;
+                });
+
+                document.getElementById("columnsDiv").style.display = "block";
+            })
+            .catch(err => alert("Error loading columns: " + err));
+        }
+
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll(".column-checkbox");
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+        }
+
+        function updateSelectAllStatus() {
+            const checkboxes = document.querySelectorAll(".column-checkbox");
+            const masterCheckbox = document.getElementById("selectAllFields");
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            masterCheckbox.checked = allChecked;
+        }
+
+        function generatePdf() {
+            const connStr = document.getElementById("connStr").value;
+            const tableName = document.getElementById("tableDropdown").value;
+            const selectedFields = getSelectedFields();
+            if (!connStr || !tableName || selectedFields.length === 0) {
+                alert("Please fill all details.");
+                return;
+            }
+
+            fetch('/PdfTool/GeneratePdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+            })
+            .then(response => response.blob())
+            .then(blob => downloadBlob(blob, `${tableName}.pdf`))
+            .catch(err => alert("Error generating PDF: " + err));
+        }
+
+        function generateExcel() {
+            const connStr = document.getElementById("connStr").value;
+            const tableName = document.getElementById("tableDropdown").value;
+            const selectedFields = getSelectedFields();
+            if (!connStr || !tableName || selectedFields.length === 0) {
+                alert("Please fill all details.");
+                return;
+            }
+
+            fetch('/PdfTool/GenerateExcel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+            })
+            .then(response => response.blob())
+            .then(blob => downloadBlob(blob, `${tableName}.xlsx`))
+            .catch(err => alert("Error generating Excel: " + err));
+        }
+
+        function generateWord() {
+            const connStr = document.getElementById("connStr").value;
+            const tableName = document.getElementById("tableDropdown").value;
+            const selectedFields = getSelectedFields();
+            if (!connStr || !tableName || selectedFields.length === 0) {
+                alert("Please fill all details.");
+                return;
+            }
+
+            fetch('/PdfTool/GenerateWord', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName, selectedFields })
+            })
+            .then(response => response.blob())
+            .then(blob => downloadBlob(blob, `${tableName}.docx`))
+            .catch(err => alert("Error generating Word document: " + err));
+        }
+
+        function getSelectedFields() {
+            const checkboxes = document.querySelectorAll("#columnCheckboxes input.column-checkbox:checked");
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function downloadBlob(blob, filename) {
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+                function toggleSelectAll(source) {
+            const checkboxes = document.querySelectorAll("#columnCheckboxes input[type='checkbox']");
+            checkboxes.forEach(cb => {
+                if (cb.id !== "selectAllFields") {
+                    cb.checked = source.checked;
+                }
+            });
+        }
+
+    </script>
+ *@
+
+
+
+
+
+
+
+
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">
+                🔄 Load Tables
+            </button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info" onclick="generateWord()">📝 Word</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedTables = [];
+    let tableFieldsMap = {}; // { TableName: [fields] }
+    let allTablesList = []; // Cache for dropdown reuse
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            allTablesList = data;
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => dropdown.innerHTML += `<option value="${table}">${table}</option>`);
+
+            const addMore = document.getElementById("addMoreDropdown");
+            addMore.innerHTML = '<option value="">-- Add Table --</option>';
+            data.forEach(table => addMore.innerHTML += `<option value="${table}">${table}</option>`);
+        })
+        .catch(err => alert("Error loading tables: " + err));
+    }
+
+    function addInitialTable() {
+        const tableName = document.getElementById("tableDropdown").value;
+        if (!tableName) return;
+        document.getElementById("addMoreSection").style.display = "block";
+        handleTableSelection(tableName);
+    }
+
+    function handleTableSelection(tableName) {
+        const connStr = document.getElementById("connStr").value;
+        if (!tableName || selectedTables.includes(tableName)) return;
+
+        selectedTables.push(tableName);
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName })
+        })
+        .then(res => res.json())
+        .then(columns => renderTableSection(tableName, columns))
+        .catch(err => alert("Error loading columns: " + err));
+    }
+
+    function renderTableSection(tableName, columns) {
+        const container = document.getElementById("dynamicTableSections");
+
+        const section = document.createElement("div");
+        section.className = "border rounded bg-white p-3 mb-3";
+        section.innerHTML = `
+            <div class="fw-bold mb-2">${tableName}</div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="selectAll_${tableName}" onchange="toggleAllFields('${tableName}')">
+                <label class="form-check-label" for="selectAll_${tableName}">Select All Fields</label>
+            </div>
+            <div id="fields_${tableName}" class="d-flex flex-wrap gap-3"></div>
+        `;
+
+        const fieldContainer = section.querySelector(`#fields_${tableName}`);
+        columns.forEach(col => {
+            const safeId = `${tableName}_${col}`.replace(/[^a-zA-Z0-9]/g, '_');
+            fieldContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${col}" id="${safeId}" data-table="${tableName}" onchange="updateFieldSelection('${tableName}')">
+                    <label class="form-check-label" for="${safeId}">${col}</label>
+                </div>
+            `;
+        });
+
+        container.appendChild(section);
+        tableFieldsMap[tableName] = columns.slice();
+        setTimeout(() => toggleAllFields(tableName, true), 100);
+    }
+
+    function toggleAllFields(tableName, forceAll = false) {
+        const checkboxes = document.querySelectorAll(`#fields_${tableName} input[type='checkbox']`);
+        checkboxes.forEach(cb => cb.checked = forceAll || document.getElementById(`selectAll_${tableName}`).checked);
+        updateFieldSelection(tableName);
+    }
+
+    function updateFieldSelection(tableName) {
+        const selected = Array.from(document.querySelectorAll(`#fields_${tableName} input[type='checkbox']:checked`)).map(cb => cb.value);
+        tableFieldsMap[tableName] = selected;
+    }
+
+    function gatherExportRequest() {
+        const connectionString = document.getElementById("connStr").value;
+        return { connectionString, tableNames: selectedTables, selectedFieldsMap: tableFieldsMap };
+    }
+
+    function generatePdf() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.pdf`))
+        .catch(err => alert("Error generating PDF: " + err));
+    }
+
+    function generateExcel() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.xlsx`))
+        .catch(err => alert("Error generating Excel: " + err));
+    }
+
+    function generateWord() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.docx`))
+        .catch(err => alert("Error generating Word: " + err));
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+<style>
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+    }
+
+        .dark-mode .card {
+            background-color: #2b2b2b;
+            border-color: #444;
+        }
+
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .dark-mode .btn {
+            border-color: #666;
+        }
+
+        .dark-mode label,
+        .dark-mode .form-check-label {
+            color: #ddd;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
+ *@
+
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">
+                🔄 Load Tables
+            </button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info" onclick="generateWord()">📝 Word</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedTables = [];
+    let tableFieldsMap = {}; // { TableName: [fields] }
+    let allTablesList = []; // Cache for dropdown reuse
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            allTablesList = data;
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => dropdown.innerHTML += `<option value="${table}">${table}</option>`);
+
+            const addMore = document.getElementById("addMoreDropdown");
+            addMore.innerHTML = '<option value="">-- Add Table --</option>';
+            data.forEach(table => addMore.innerHTML += `<option value="${table}">${table}</option>`);
+        })
+        .catch(err => alert("Error loading tables: " + err));
+    }
+
+    function addInitialTable() {
+        const tableName = document.getElementById("tableDropdown").value;
+        if (!tableName) return;
+        document.getElementById("addMoreSection").style.display = "block";
+        handleTableSelection(tableName);
+    }
+
+    function handleTableSelection(tableName) {
+        const connStr = document.getElementById("connStr").value;
+        if (!tableName || selectedTables.includes(tableName)) return;
+
+        selectedTables.push(tableName);
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName })
+        })
+        .then(res => res.json())
+        .then(columns => renderTableSection(tableName, columns))
+        .catch(err => alert("Error loading columns: " + err));
+    }
+
+    function renderTableSection(tableName, columns) {
+        const container = document.getElementById("dynamicTableSections");
+
+        const section = document.createElement("div");
+        section.className = "border rounded bg-white p-3 mb-3";
+        section.innerHTML = `
+            <div class="fw-bold mb-2">${tableName}</div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="selectAll_${tableName}" onchange="toggleAllFields('${tableName}')">
+                <label class="form-check-label" for="selectAll_${tableName}">Select All Fields</label>
+            </div>
+            <div id="fields_${tableName}" class="d-flex flex-wrap gap-3"></div>
+        `;
+
+        const fieldContainer = section.querySelector(`#fields_${tableName}`);
+        columns.forEach(col => {
+            const safeId = `${tableName}_${col}`.replace(/[^a-zA-Z0-9]/g, '_');
+            fieldContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${col}" id="${safeId}" data-table="${tableName}" onchange="updateFieldSelection('${tableName}')">
+                    <label class="form-check-label" for="${safeId}">${col}</label>
+                </div>
+            `;
+        });
+
+        container.appendChild(section);
+        tableFieldsMap[tableName] = []; // ✅ Do not select any by default
+    }
+
+    function toggleAllFields(tableName, forceAll = false) {
+        const checkboxes = document.querySelectorAll(`#fields_${tableName} input[type='checkbox']`);
+        checkboxes.forEach(cb => cb.checked = forceAll || document.getElementById(`selectAll_${tableName}`).checked);
+        updateFieldSelection(tableName);
+    }
+
+    function updateFieldSelection(tableName) {
+        const selected = Array.from(document.querySelectorAll(`#fields_${tableName} input[type='checkbox']:checked`)).map(cb => cb.value);
+        tableFieldsMap[tableName] = selected;
+    }
+
+    function gatherExportRequest() {
+        const connectionString = document.getElementById("connStr").value;
+        return { connectionString, tableNames: selectedTables, selectedFieldsMap: tableFieldsMap };
+    }
+
+    function generatePdf() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.pdf`))
+        .catch(err => alert("Error generating PDF: " + err));
+    }
+
+    function generateExcel() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.xlsx`))
+        .catch(err => alert("Error generating Excel: " + err));
+    }
+
+    function generateWord() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return alert("Please select at least one table with fields.");
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.docx`))
+        .catch(err => alert("Error generating Word: " + err));
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+<style>
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+    }
+
+        .dark-mode .card {
+            background-color: #2b2b2b;
+            border-color: #444;
+        }
+
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .dark-mode .btn {
+            border-color: #666;
+        }
+
+        .dark-mode label,
+        .dark-mode .form-check-label {
+            color: #ddd;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
+     *@
+
+
+
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Email Alert -->
+<div id="emailAlert" class="alert" style="display: none;" role="alert"></div>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">🔄 Load Tables</button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info" onclick="generateWord()">📝 Word</button>
+        </div>
+
+        <!-- Email Section -->
+        <div id="emailSection" class="mt-4" style="display:none;">
+            <label for="emailInput" class="form-label fw-semibold">📧 Send to Email:</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="Enter recipient email" required />
+
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="downloadCopy">
+                <label class="form-check-label" for="downloadCopy">Also download a copy</label>
+            </div>
+
+            <button class="btn btn-primary mt-2" onclick="sendEmail()">✉️ Send Email</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedTables = [];
+    let tableFieldsMap = {};
+    let allTablesList = [];
+    let pdfBytesForEmail = null;
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function showEmailAlert(message, type = "success") {
+        const alertBox = document.getElementById("emailAlert");
+        alertBox.innerText = message;
+        alertBox.className = "alert alert-" + type;
+        alertBox.style.display = "block";
+
+        setTimeout(() => {
+            alertBox.style.display = "none";
+        }, 4000);
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            allTablesList = data;
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => dropdown.innerHTML += `<option value="${table}">${table}</option>`);
+
+            const addMore = document.getElementById("addMoreDropdown");
+            addMore.innerHTML = '<option value="">-- Add Table --</option>';
+            data.forEach(table => addMore.innerHTML += `<option value="${table}">${table}</option>`);
+        })
+        .catch(err => showEmailAlert("Error loading tables: " + err, "danger"));
+    }
+
+    function addInitialTable() {
+        const tableName = document.getElementById("tableDropdown").value;
+        if (!tableName) return;
+        document.getElementById("addMoreSection").style.display = "block";
+        handleTableSelection(tableName);
+    }
+
+    function handleTableSelection(tableName) {
+        const connStr = document.getElementById("connStr").value;
+        if (!tableName || selectedTables.includes(tableName)) return;
+
+        selectedTables.push(tableName);
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName })
+        })
+        .then(res => res.json())
+        .then(columns => renderTableSection(tableName, columns))
+        .catch(err => showEmailAlert("Error loading columns: " + err, "danger"));
+    }
+
+    function renderTableSection(tableName, columns) {
+        const container = document.getElementById("dynamicTableSections");
+
+        const section = document.createElement("div");
+        section.className = "border rounded bg-white p-3 mb-3";
+        section.innerHTML = `
+            <div class="fw-bold mb-2">${tableName}</div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="selectAll_${tableName}" onchange="toggleAllFields('${tableName}')">
+                <label class="form-check-label" for="selectAll_${tableName}">Select All Fields</label>
+            </div>
+            <div id="fields_${tableName}" class="d-flex flex-wrap gap-3"></div>
+        `;
+
+        const fieldContainer = section.querySelector(`#fields_${tableName}`);
+        columns.forEach(col => {
+            const safeId = `${tableName}_${col}`.replace(/[^a-zA-Z0-9]/g, '_');
+            fieldContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${col}" id="${safeId}" data-table="${tableName}" onchange="updateFieldSelection('${tableName}')">
+                    <label class="form-check-label" for="${safeId}">${col}</label>
+                </div>
+            `;
+        });
+
+        container.appendChild(section);
+        tableFieldsMap[tableName] = [];
+    }
+
+    function toggleAllFields(tableName, forceAll = false) {
+        const checkboxes = document.querySelectorAll(`#fields_${tableName} input[type='checkbox']`);
+        checkboxes.forEach(cb => cb.checked = forceAll || document.getElementById(`selectAll_${tableName}`).checked);
+        updateFieldSelection(tableName);
+    }
+
+    function updateFieldSelection(tableName) {
+        const selected = Array.from(document.querySelectorAll(`#fields_${tableName} input[type='checkbox']:checked`)).map(cb => cb.value);
+        tableFieldsMap[tableName] = selected;
+    }
+
+    function gatherExportRequest() {
+        const connectionString = document.getElementById("connStr").value;
+        return { connectionString, tableNames: selectedTables, selectedFieldsMap: tableFieldsMap };
+    }
+
+    function generatePdf() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            downloadBlob(blob, `Export_${Date.now()}.pdf`);
+
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                const arrayBuffer = reader.result;
+                pdfBytesForEmail = new Uint8Array(arrayBuffer);
+                showEmailUI();
+            };
+            reader.readAsArrayBuffer(blob);
+        })
+        .catch(err => showEmailAlert("Error generating PDF: " + err, "danger"));
+    }
+
+    function generateExcel() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.xlsx`))
+        .catch(err => showEmailAlert("Error generating Excel: " + err, "danger"));
+    }
+
+    function generateWord() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.docx`))
+        .catch(err => showEmailAlert("Error generating Word: " + err, "danger"));
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    function showEmailUI() {
+        document.getElementById("emailSection").style.display = "block";
+    }
+
+        async function sendEmail() {
+        const email = document.getElementById("emailInput").value;
+        const downloadCopy = document.getElementById("downloadCopy").checked;
+
+        if (!email || !pdfBytesForEmail) {
+            alert("Please enter a valid email and generate PDF first.");
+            return;
+        }
+
+        // ✅ Convert pdfBytesForEmail (Uint8Array) to Base64
+        const base64String = btoa(String.fromCharCode(...pdfBytesForEmail));
+
+        const payload = {
+            email: email,
+            pdfBase64: base64String,
+            fileName: "Report.pdf"
+        };
+
+        const response = await fetch('/api/export/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const statusDiv = document.getElementById('emailStatus');
+
+        if (result.success) {
+            statusDiv.innerText = "✅ Email sent successfully!";
+            statusDiv.classList.remove("text-danger");
+            statusDiv.classList.add("text-success");
+
+            if (downloadCopy) {
+                const blob = new Blob([pdfBytesForEmail], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "Report.pdf";
+                link.click();
+            }
+        } else {
+            statusDiv.innerText = "❌ Failed to send email.";
+            statusDiv.classList.remove("text-success");
+            statusDiv.classList.add("text-danger");
+        }
+    }
+
+</script>
+
+<style>
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+    }
+
+        .dark-mode .card {
+            background-color: #2b2b2b;
+            border-color: #444;
+        }
+
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .dark-mode .btn {
+            border-color: #666;
+        }
+
+        .dark-mode label,
+        .dark-mode .form-check-label {
+            color: #ddd;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style> *@
+
+
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Email Alert -->
+<div id="emailAlert" class="alert" style="display: none;" role="alert"></div>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">🔄 Load Tables</button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info me-2" onclick="generateWord()">📝 Word</button>
+        </div>
+
+        <!-- ZIP Export Buttons -->
+        <div class="col-12 text-center mt-4">
+            <h5 class="fw-semibold mt-2">📦 Export as ZIP (Per Table)</h5>
+            <button class="btn btn-outline-success me-2" onclick="exportZip('pdf')">📦 ZIP (PDF)</button>
+            <button class="btn btn-outline-warning me-2" onclick="exportZip('excel')">📦 ZIP (Excel)</button>
+            <button class="btn btn-outline-info me-2" onclick="exportZip('word')">📦 ZIP (Word)</button>
+            <button class="btn btn-outline-dark" onclick="exportZip('all')">📦 ZIP (All)</button>
+        </div>
+
+
+        <!-- Email Section -->
+        <div id="emailSection" class="mt-4" style="display:none;">
+            <label for="emailInput" class="form-label fw-semibold">📧 Send to Email:</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="Enter recipient email" required />
+
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="downloadCopy">
+                <label class="form-check-label" for="downloadCopy">Also download a copy</label>
+            </div>
+
+            <button class="btn btn-primary mt-2" onclick="sendEmail()">✉️ Send Email</button>
+            <div id="emailStatus" class="mt-2"></div>
+        </div>
+
+        <!-- Preview Panel Toggle -->
+        <div class="col-12 mt-3">
+            <button class="btn btn-outline-secondary" onclick="togglePreviewPanel()">👁️ Toggle Preview</button>
+        </div>
+
+        <!-- Preview Panel -->
+        <div id="previewPanel" class="col-12 mt-3" style="display: none;"></div>
+    </div>
+</div> *@
+@* @{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Email Alert -->
+<div id="emailAlert" class="alert" style="display: none;" role="alert"></div>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">🔄 Load Tables</button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info me-2" onclick="generateWord()">📝 Word</button>
+        </div>
+
+        <!-- ZIP Export Section -->
+        <!-- ZIP Export Buttons (Centered Horizontal Layout) -->
+        <div class="col-12 text-center mt-4">
+            <h5 class="fw-semibold mt-2">📂 Include in ZIP:</h5>
+
+            <div class="d-flex justify-content-center flex-wrap gap-2 mt-2">
+                <button class="btn btn-outline-success" onclick="exportZip('pdf')">📦 ZIP (PDF)</button>
+                <button class="btn btn-outline-warning" onclick="exportZip('excel')">📦 ZIP (Excel)</button>
+                <button class="btn btn-outline-info" onclick="exportZip('word')">📦 ZIP (Word)</button>
+                <button class="btn btn-outline-dark" onclick="exportZip('all')">📦 ZIP (All)</button>
+            </div>
+
+            <!-- Optional ZIP File Name Input -->
+            <div class="mt-3">
+                <input type="text" class="form-control w-50 mx-auto" placeholder="Enter ZIP file name (optional)" />
+            </div>
+        </div>
+
+            <div class="text-center">
+                <h6 class="fw-semibold">📦 Export as ZIP (Per Table)</h6>
+                <button class="btn btn-outline-secondary" onclick="exportAsZip()">📦 Export as ZIP</button>
+            </div> 
+        </div>
+
+        <!-- Email Section -->
+        <div id="emailSection" class="mt-4" style="display:none;">
+            <label for="emailInput" class="form-label fw-semibold">📧 Send to Email:</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="Enter recipient email" required />
+
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="downloadCopy">
+                <label class="form-check-label" for="downloadCopy">Also download a copy</label>
+            </div>
+
+            <button class="btn btn-primary mt-2" onclick="sendEmail()">✉️ Send Email</button>
+            <div id="emailStatus" class="mt-2"></div>
+        </div>
+
+        <!-- Preview Panel Toggle -->
+        <div class="col-12 mt-3">
+            <button class="btn btn-outline-secondary" onclick="togglePreviewPanel()">👁️ Toggle Preview</button>
+        </div>
+
+        <!-- Preview Panel -->
+        <div id="previewPanel" class="col-12 mt-3" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let selectedTables = [];
+    let tableFieldsMap = {};
+    let allTablesList = [];
+    let pdfBytesForEmail = null;
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function showEmailAlert(message, type = "success") {
+        const alertBox = document.getElementById("emailAlert");
+        alertBox.innerText = message;
+        alertBox.className = "alert alert-" + type;
+        alertBox.style.display = "block";
+
+        setTimeout(() => {
+            alertBox.style.display = "none";
+        }, 4000);
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            allTablesList = data;
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => dropdown.innerHTML += `<option value="${table}">${table}</option>`);
+
+            const addMore = document.getElementById("addMoreDropdown");
+            addMore.innerHTML = '<option value="">-- Add Table --</option>';
+            data.forEach(table => addMore.innerHTML += `<option value="${table}">${table}</option>`);
+        })
+        .catch(err => showEmailAlert("Error loading tables: " + err, "danger"));
+    }
+
+    function addInitialTable() {
+        const tableName = document.getElementById("tableDropdown").value;
+        if (!tableName) return;
+        document.getElementById("addMoreSection").style.display = "block";
+        handleTableSelection(tableName);
+    }
+
+    function handleTableSelection(tableName) {
+        const connStr = document.getElementById("connStr").value;
+        if (!tableName || selectedTables.includes(tableName)) return;
+
+        selectedTables.push(tableName);
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName })
+        })
+        .then(res => res.json())
+        .then(columns => renderTableSection(tableName, columns))
+        .catch(err => showEmailAlert("Error loading columns: " + err, "danger"));
+    }
+
+    function renderTableSection(tableName, columns) {
+        const container = document.getElementById("dynamicTableSections");
+
+        const section = document.createElement("div");
+        section.className = "border rounded bg-white p-3 mb-3";
+        section.innerHTML = `
+            <div class="fw-bold mb-2">${tableName}</div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="selectAll_${tableName}" onchange="toggleAllFields('${tableName}')">
+                <label class="form-check-label" for="selectAll_${tableName}">Select All Fields</label>
+            </div>
+            <div id="fields_${tableName}" class="d-flex flex-wrap gap-3"></div>
+        `;
+
+        const fieldContainer = section.querySelector(`#fields_${tableName}`);
+        columns.forEach(col => {
+            const safeId = `${tableName}_${col}`.replace(/[^a-zA-Z0-9]/g, '_');
+            fieldContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${col}" id="${safeId}" data-table="${tableName}" onchange="updateFieldSelection('${tableName}')">
+                    <label class="form-check-label" for="${safeId}">${col}</label>
+                </div>
+            `;
+        });
+
+        container.appendChild(section);
+        tableFieldsMap[tableName] = [];
+    }
+
+    function toggleAllFields(tableName, forceAll = false) {
+        const checkboxes = document.querySelectorAll(`#fields_${tableName} input[type='checkbox']`);
+        checkboxes.forEach(cb => cb.checked = forceAll || document.getElementById(`selectAll_${tableName}`).checked);
+        updateFieldSelection(tableName);
+    }
+
+    function updateFieldSelection(tableName) {
+        const selected = Array.from(document.querySelectorAll(`#fields_${tableName} input[type='checkbox']:checked`)).map(cb => cb.value);
+        tableFieldsMap[tableName] = selected;
+        loadPreview();
+    }
+
+    function gatherExportRequest() {
+        const connectionString = document.getElementById("connStr").value;
+        return { connectionString, tableNames: selectedTables, selectedFieldsMap: tableFieldsMap };
+    }
+
+    function generatePdf() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            downloadBlob(blob, `Export_${Date.now()}.pdf`);
+
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                const arrayBuffer = reader.result;
+                pdfBytesForEmail = new Uint8Array(arrayBuffer);
+                showEmailUI();
+            };
+            reader.readAsArrayBuffer(blob);
+        })
+        .catch(err => showEmailAlert("Error generating PDF: " + err, "danger"));
+    }
+
+    function generateExcel() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.xlsx`))
+        .catch(err => showEmailAlert("Error generating Excel: " + err, "danger"));
+    }
+
+    function generateWord() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.docx`))
+        .catch(err => showEmailAlert("Error generating Word: " + err, "danger"));
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    function showEmailUI() {
+        document.getElementById("emailSection").style.display = "block";
+    }
+
+    async function sendEmail() {
+        const email = document.getElementById("emailInput").value;
+        const downloadCopy = document.getElementById("downloadCopy").checked;
+
+        if (!email || !pdfBytesForEmail) {
+            alert("Please enter a valid email and generate PDF first.");
+            return;
+        }
+
+        const base64String = btoa(String.fromCharCode(...pdfBytesForEmail));
+
+        const payload = {
+            email: email,
+            pdfBase64: base64String,
+            fileName: "Report.pdf"
+        };
+
+        const response = await fetch('/api/export/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const statusDiv = document.getElementById('emailStatus');
+
+        if (result.success) {
+            statusDiv.innerText = "✅ Email sent successfully!";
+            statusDiv.classList.remove("text-danger");
+            statusDiv.classList.add("text-success");
+
+            if (downloadCopy) {
+                const blob = new Blob([pdfBytesForEmail], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "Report.pdf";
+                link.click();
+            }
+        } else {
+            statusDiv.innerText = "❌ Failed to send email.";
+            statusDiv.classList.remove("text-success");
+            statusDiv.classList.add("text-danger");
+        }
+    }
+
+    function togglePreviewPanel() {
+        const panel = document.getElementById("previewPanel");
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        if (panel.style.display === "block") loadPreview();
+    }
+
+
+        function exportZip(format) {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch(`/PdfTool/ExportZip?format=${format}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("ZIP export failed.");
+            return res.blob();
+        })
+        .then(blob => downloadBlob(blob, `Export_${format}_ZIP_${Date.now()}.zip`))
+        .catch(err => showEmailAlert("❌ ZIP export failed: " + err.message, "danger"));
+    }
+
+
+    function loadPreview() {
+        const connStr = document.getElementById("connStr").value;
+        const previewPanel = document.getElementById("previewPanel");
+        previewPanel.innerHTML = "";
+
+        selectedTables.forEach(table => {
+            const selectedFields = tableFieldsMap[table] || [];
+            if (selectedFields.length === 0) return;
+
+            fetch('/PdfTool/PreviewData', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName: table, selectedFields })
+            })
+            .then(res => res.json())
+            .then(rows => {
+                if (rows.length === 0) return;
+
+                let html = `<div class='mt-4'><h5 class='text-primary'>🔍 Preview: ${table}</h5><div class='table-responsive'><table class='table table-bordered table-sm'><thead><tr>`;
+                selectedFields.forEach(f => html += `<th>${f}</th>`);
+                html += "</tr></thead><tbody>";
+
+                rows.forEach(row => {
+                    html += "<tr>";
+                    selectedFields.forEach(f => html += `<td>${row[f] ?? ''}</td>`);
+                    html += "</tr>";
+                });
+
+                html += "</tbody></table></div></div>";
+                previewPanel.innerHTML += html;
+            });
+        });
+    }
+</script>
+
+<style>
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+    }
+
+        .dark-mode .card {
+            background-color: #2b2b2b;
+            border-color: #444;
+        }
+
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .dark-mode .btn {
+            border-color: #666;
+        }
+
+        .dark-mode label,
+        .dark-mode .form-check-label {
+            color: #ddd;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
+ *@
+
+@{
+    ViewData["Title"] = "📋 Dynamic Export Report Tool";
+}
+
+<h2 class="text-center text-primary fw-bold mb-4">📋 Dynamic Export Report Tool</h2>
+
+<!-- Email Alert -->
+<div id="emailAlert" class="alert" style="display: none;" role="alert"></div>
+
+<!-- Dark Mode Toggle -->
+<div class="form-check form-switch mb-3 text-end pe-2">
+    <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+    <label class="form-check-label" for="darkModeToggle">🌙 Dark Mode</label>
+</div>
+
+<!-- Card -->
+<div class="card shadow-lg p-4 border-0 bg-light">
+    <div class="row g-3">
+        <!-- Connection String -->
+        <div class="col-12">
+            <label for="connStr" class="form-label fw-semibold">🔌 SQL Connection String</label>
+            <input type="text" id="connStr" class="form-control" placeholder="Paste your SQL Server connection string..." />
+        </div>
+
+        <!-- Load Tables Button -->
+        <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadTables()">🔄 Load Tables</button>
+        </div>
+
+        <!-- Initial Table Dropdown -->
+        <div class="col-12">
+            <label for="tableDropdown" class="form-label fw-semibold">📑 Select Initial Table</label>
+            <select id="tableDropdown" class="form-select" onchange="addInitialTable()">
+                <option value="">-- Select Table --</option>
+            </select>
+        </div>
+
+        <!-- Add More Tables Dropdown -->
+        <div class="col-12" id="addMoreSection" style="display:none;">
+            <label for="addMoreDropdown" class="form-label fw-semibold">➕ Add More Table</label>
+            <select id="addMoreDropdown" class="form-select" onchange="handleTableSelection(this.value)">
+                <option value="">-- Add Table --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Table Section Container -->
+        <div id="dynamicTableSections" class="col-12 mt-4"></div>
+
+        <!-- Export Buttons -->
+        <div class="col-12 text-center mt-3">
+            <button class="btn btn-success me-2" onclick="generatePdf()">📄 PDF</button>
+            <button class="btn btn-warning me-2" onclick="generateExcel()">📊 Excel</button>
+            <button class="btn btn-info me-2" onclick="generateWord()">📝 Word</button>
+        </div>
+
+        <!-- ZIP Export Section -->
+        <div class="col-12 text-center mt-4">
+            <h5 class="fw-semibold mt-2">📂 Include in ZIP:</h5>
+
+            <div class="d-flex justify-content-center flex-wrap gap-2 mt-2">
+                <button class="btn btn-outline-success" onclick="exportZip('pdf')">📦 ZIP (PDF)</button>
+                <button class="btn btn-outline-warning" onclick="exportZip('excel')">📦 ZIP (Excel)</button>
+                <button class="btn btn-outline-info" onclick="exportZip('word')">📦 ZIP (Word)</button>
+                <button class="btn btn-outline-dark" onclick="exportZip('all')">📦 ZIP (All)</button>
+            </div>
+
+            <!-- Optional ZIP File Name Input -->
+            <div class="mt-3">
+                <input type="text" id="zipNameInput" class="form-control w-50 mx-auto" placeholder="Enter ZIP file name (optional)" />
+            </div>
+        </div>
+
+        <!-- Email Section -->
+        <div id="emailSection" class="mt-4" style="display:none;">
+            <label for="emailInput" class="form-label fw-semibold">📧 Send to Email:</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="Enter recipient email" required />
+
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="downloadCopy">
+                <label class="form-check-label" for="downloadCopy">Also download a copy</label>
+            </div>
+
+            <button class="btn btn-primary mt-2" onclick="sendEmail()">✉️ Send Email</button>
+            <div id="emailStatus" class="mt-2"></div>
+        </div>
+
+        <!-- Preview Panel Toggle -->
+        <div class="col-12 mt-3">
+            <button class="btn btn-outline-secondary" onclick="togglePreviewPanel()">👁️ Toggle Preview</button>
+        </div>
+
+        <!-- Preview Panel -->
+        <div id="previewPanel" class="col-12 mt-3" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let selectedTables = [];
+    let tableFieldsMap = {};
+    let allTablesList = [];
+    let pdfBytesForEmail = null;
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function showEmailAlert(message, type = "success") {
+        const alertBox = document.getElementById("emailAlert");
+        alertBox.innerText = message;
+        alertBox.className = "alert alert-" + type;
+        alertBox.style.display = "block";
+        setTimeout(() => { alertBox.style.display = "none"; }, 4000);
+    }
+
+    function loadTables() {
+        const connStr = document.getElementById("connStr").value;
+        fetch('/PdfTool/GetTables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr })
+        })
+        .then(res => res.json())
+        .then(data => {
+            allTablesList = data;
+            const dropdown = document.getElementById("tableDropdown");
+            dropdown.innerHTML = '<option value="">-- Select Table --</option>';
+            data.forEach(table => dropdown.innerHTML += `<option value="${table}">${table}</option>`);
+
+            const addMore = document.getElementById("addMoreDropdown");
+            addMore.innerHTML = '<option value="">-- Add Table --</option>';
+            data.forEach(table => addMore.innerHTML += `<option value="${table}">${table}</option>`);
+        })
+        .catch(err => showEmailAlert("Error loading tables: " + err, "danger"));
+    }
+
+    function addInitialTable() {
+        const tableName = document.getElementById("tableDropdown").value;
+        if (!tableName) return;
+        document.getElementById("addMoreSection").style.display = "block";
+        handleTableSelection(tableName);
+    }
+
+    function handleTableSelection(tableName) {
+        const connStr = document.getElementById("connStr").value;
+        if (!tableName || selectedTables.includes(tableName)) return;
+
+        selectedTables.push(tableName);
+        fetch('/PdfTool/GetColumns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString: connStr, tableName })
+        })
+        .then(res => res.json())
+        .then(columns => renderTableSection(tableName, columns))
+        .catch(err => showEmailAlert("Error loading columns: " + err, "danger"));
+    }
+
+    function renderTableSection(tableName, columns) {
+        const container = document.getElementById("dynamicTableSections");
+        const section = document.createElement("div");
+        section.className = "border rounded bg-white p-3 mb-3";
+        section.innerHTML = `
+            <div class="fw-bold mb-2">${tableName}</div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="selectAll_${tableName}" onchange="toggleAllFields('${tableName}')">
+                <label class="form-check-label" for="selectAll_${tableName}">Select All Fields</label>
+            </div>
+            <div id="fields_${tableName}" class="d-flex flex-wrap gap-3"></div>
+        `;
+
+        const fieldContainer = section.querySelector(`#fields_${tableName}`);
+        columns.forEach(col => {
+            const safeId = `${tableName}_${col}`.replace(/[^a-zA-Z0-9]/g, '_');
+            fieldContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${col}" id="${safeId}" data-table="${tableName}" onchange="updateFieldSelection('${tableName}')">
+                    <label class="form-check-label" for="${safeId}">${col}</label>
+                </div>
+            `;
+        });
+
+        container.appendChild(section);
+        tableFieldsMap[tableName] = [];
+    }
+
+    function toggleAllFields(tableName, forceAll = false) {
+        const checkboxes = document.querySelectorAll(`#fields_${tableName} input[type='checkbox']`);
+        checkboxes.forEach(cb => cb.checked = forceAll || document.getElementById(`selectAll_${tableName}`).checked);
+        updateFieldSelection(tableName);
+    }
+
+    function updateFieldSelection(tableName) {
+        const selected = Array.from(document.querySelectorAll(`#fields_${tableName} input[type='checkbox']:checked`)).map(cb => cb.value);
+        tableFieldsMap[tableName] = selected;
+        loadPreview();
+    }
+
+    function gatherExportRequest() {
+        const connectionString = document.getElementById("connStr").value;
+        return { connectionString, tableNames: selectedTables, selectedFieldsMap: tableFieldsMap };
+    }
+
+    function generatePdf() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GeneratePdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            downloadBlob(blob, `Export_${Date.now()}.pdf`);
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                pdfBytesForEmail = new Uint8Array(reader.result);
+                showEmailUI();
+            };
+            reader.readAsArrayBuffer(blob);
+        })
+        .catch(err => showEmailAlert("Error generating PDF: " + err, "danger"));
+    }
+
+    function generateExcel() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateExcel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.xlsx`))
+        .catch(err => showEmailAlert("Error generating Excel: " + err, "danger"));
+    }
+
+    function generateWord() {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        fetch('/PdfTool/GenerateWord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.blob())
+        .then(blob => downloadBlob(blob, `Export_${Date.now()}.docx`))
+        .catch(err => showEmailAlert("Error generating Word: " + err, "danger"));
+    }
+
+    function exportZip(format) {
+        const payload = gatherExportRequest();
+        if (!payload.connectionString || payload.tableNames.length === 0)
+            return showEmailAlert("⚠️ Please select at least one table with fields.", "warning");
+
+        const zipName = document.getElementById("zipNameInput")?.value?.trim() || "";
+
+        fetch(`/PdfTool/ExportZip?format=${format}&fileName=${encodeURIComponent(zipName)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("ZIP export failed.");
+            return res.blob();
+        })
+        .then(blob => {
+            const finalName = zipName ? zipName + ".zip" : `Export_${format}_ZIP_${Date.now()}.zip`;
+            downloadBlob(blob, finalName);
+        })
+        .catch(err => showEmailAlert("❌ ZIP export failed: " + err.message, "danger"));
+    }
+
+    function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    function showEmailUI() {
+        document.getElementById("emailSection").style.display = "block";
+    }
+
+    async function sendEmail() {
+        const email = document.getElementById("emailInput").value;
+        const downloadCopy = document.getElementById("downloadCopy").checked;
+
+        if (!email || !pdfBytesForEmail) {
+            alert("Please enter a valid email and generate PDF first.");
+            return;
+        }
+
+        const base64String = btoa(String.fromCharCode(...pdfBytesForEmail));
+
+        const payload = {
+            email: email,
+            pdfBase64: base64String,
+            fileName: "Report.pdf"
+        };
+
+        const response = await fetch('/api/export/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const statusDiv = document.getElementById('emailStatus');
+
+        if (result.success) {
+            statusDiv.innerText = "✅ Email sent successfully!";
+            statusDiv.classList.remove("text-danger");
+            statusDiv.classList.add("text-success");
+
+            if (downloadCopy) {
+                const blob = new Blob([pdfBytesForEmail], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "Report.pdf";
+                link.click();
+            }
+        } else {
+            statusDiv.innerText = "❌ Failed to send email.";
+            statusDiv.classList.remove("text-success");
+            statusDiv.classList.add("text-danger");
+        }
+    }
+
+    function togglePreviewPanel() {
+        const panel = document.getElementById("previewPanel");
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        if (panel.style.display === "block") loadPreview();
+    }
+
+    function loadPreview() {
+        const connStr = document.getElementById("connStr").value;
+        const previewPanel = document.getElementById("previewPanel");
+        previewPanel.innerHTML = "";
+
+        selectedTables.forEach(table => {
+            const selectedFields = tableFieldsMap[table] || [];
+            if (selectedFields.length === 0) return;
+
+            fetch('/PdfTool/PreviewData', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connectionString: connStr, tableName: table, selectedFields })
+            })
+            .then(res => res.json())
+            .then(rows => {
+                if (rows.length === 0) return;
+
+                let html = `<div class='mt-4'><h5 class='text-primary'>🔍 Preview: ${table}</h5><div class='table-responsive'><table class='table table-bordered table-sm'><thead><tr>`;
+                selectedFields.forEach(f => html += `<th>${f}</th>`);
+                html += "</tr></thead><tbody>";
+
+                rows.forEach(row => {
+                    html += "<tr>";
+                    selectedFields.forEach(f => html += `<td>${row[f] ?? ''}</td>`);
+                    html += "</tr>";
+                });
+
+                html += "</tbody></table></div></div>";
+                previewPanel.innerHTML += html;
+            });
+        });
+    }
+</script>
+
+<style>
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+    }
+
+        .dark-mode .card {
+            background-color: #2b2b2b;
+            border-color: #444;
+        }
+
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .dark-mode .btn {
+            border-color: #666;
+        }
+
+        .dark-mode label,
+        .dark-mode .form-check-label {
+            color: #ddd;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
